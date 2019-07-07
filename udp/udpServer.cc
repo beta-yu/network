@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     sockaddr_in local_addr;
     local_addr.sin_family = AF_INET;
     local_addr.sin_addr.s_addr = inet_addr(argv[1]);
-    local_addr.sin_port = htons((uint16_t)atoi(argv[2]));
+    local_addr.sin_port = htons(atoi(argv[2]));
     if(bind(sock_fd, (sockaddr *)&local_addr, sizeof(local_addr)) != 0) //绑定套接字
     {
         cerr << "bind error" << endl;

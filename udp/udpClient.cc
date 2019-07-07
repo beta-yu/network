@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = inet_addr(argv[1]);
-    server_addr.sin_port = htons((uint16_t)atoi(argv[2]));
+    //inet_addr完成1.将字符串转整形；2.将整形转网络字节序的IPV4地址
+    server_addr.sin_port = htons(atoi(argv[2])); //port:16bit
     while(1)
     {
         cout << "Please Enter: ";
@@ -61,3 +62,5 @@ int main(int argc, char *argv[])
     close(sock_fd);
     return 0;
 }
+
+//套接字：IP+Port，客户端的套接字IP+Port是什么？
