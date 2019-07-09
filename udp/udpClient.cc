@@ -32,14 +32,14 @@ int main(int argc, char *argv[])
     sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = inet_addr(argv[1]);
-    //inet_addr完成1.将字符串转整形；2.将整形转网络字节序的IPV4地址
+    //inet_addr完成1.将字符串（点分十进制格式的IP地址）转为一个整形；2.将整形转网络字节序的IPV4地址
     server_addr.sin_port = htons(atoi(argv[2])); //port:16bit
     while(1)
     {
         cout << "Please Enter: ";
         string msg;
         cin >> msg;
-        //发送信息到服务器
+        //向服务器发送请求，OS会为套接字分配可用端口，绑定本机地址信息
         if(sendto(sock_fd, msg.c_str(), msg.size(), 0, (sockaddr *)&server_addr, sizeof(server_addr)) < 0)
         {
             cerr << "sendto error" << endl;
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
         char buf[1024];
         sockaddr_in addr;
         socklen_t len = sizeof(addr);
-        //接收服务器返回信息
+        //接收服务器响应信息
         int size = recvfrom(sock_fd, buf, sizeof(buf)-1, 0, (sockaddr *)&addr, &len);
         if(size < 0)
         {
@@ -62,5 +62,3 @@ int main(int argc, char *argv[])
     close(sock_fd);
     return 0;
 }
-
-//套接字：IP+Port，客户端的套接字IP+Port是什么？

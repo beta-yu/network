@@ -15,7 +15,7 @@ using std::unordered_map;
 
 void Usage(string msg)
 {
-    cout << "Using: " << msg << " ipaddr port" << endl;
+    cout << "Using: " << msg << " port" << endl;
 }
 
 void handler(const string& msg, string& result)
@@ -36,7 +36,7 @@ void handler(const string& msg, string& result)
 
 int main(int argc, char *argv[])
 {
-    if(argc != 3)
+    if(argc != 2)
     {
         Usage(argv[0]); //使用错误提示信息
         return 1;
@@ -50,8 +50,8 @@ int main(int argc, char *argv[])
     }
     sockaddr_in local_addr;
     local_addr.sin_family = AF_INET;
-    local_addr.sin_addr.s_addr = inet_addr(argv[1]);
-    local_addr.sin_port = htons(atoi(argv[2]));
+    local_addr.sin_addr.s_addr = htonl(INADDR_ANY); //接受系统中所有IP在该端口的请求
+    local_addr.sin_port = htons(atoi(argv[1]));
     if(bind(sock_fd, (sockaddr *)&local_addr, sizeof(local_addr)) != 0) //绑定套接字
     {
         cerr << "bind error" << endl;
@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
         socklen_t len = sizeof(source_addr);
         char buf[1024];
         cout << "Recv: ";
-        //接受信息，保存发送方sockaddr_in
+        //接受信息，保存客户端sockaddr_in，向客户端响应时使用
         int size = recvfrom(sock_fd, buf, sizeof(buf)-1, 0, (sockaddr *)&source_addr, &len);
         if(size < 0)
         {
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
         cout << buf << endl;
         string msg;
         handler(buf, msg); //处理信息
-        //返回信息
+        //向客户端响应
         if(sendto(sock_fd, msg.c_str(), msg.size(), 0, (sockaddr *)&source_addr, len) < 0)
         {
             cerr << "sendto error" << endl;
