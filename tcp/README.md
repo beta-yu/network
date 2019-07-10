@@ -1,4 +1,5 @@
 ## Server
+```
 1.创建socket, socket()
 2.绑定地址、端口，bind(AF_INET, INADDR_ANY, Port)
 3.开始监听，listen(socket, )
@@ -9,13 +10,15 @@
         5.与该用户连接会话
         while(1)
         {
-            recv(sock, ...);
+            recv(sock, ...); //当用户关闭连接后，recv失败，服务器也关闭连接
             //...
             send(sock, ...);
         }
     }
+```
 
 ## Client
+```
 1.创建socket，socket()
 2.绑定由操作系统完成
 3.与服务器建立连接，connect(socket, addr...)
@@ -25,3 +28,5 @@
         send();
         recv();
     }
+```
+
