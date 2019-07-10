@@ -9,20 +9,23 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <signal.h>
+#include "threadpool.hpp"
 
 using namespace std;
 class tcpServer
 {
 private:
-    int _listen_sock; ////该套接字负责接收请求
+    int _listen_sock; //该套接字负责接收请求
     int _port; 
-
+    ThreadPool *tp;
+    static unordered_map<string, string> dict;
 public:
     tcpServer(int port) : _port(port)
     {}
 
     void Initserver()
     {
+        tp = Singleton().GetInstance();
         _listen_sock = socket(AF_INET, SOCK_STREAM, 0);
         if(_listen_sock < 0)
         {
@@ -45,46 +48,32 @@ public:
         }
     }
 
-    void serverIO(int sock)
+    static void *serverIO(int sock, string ipaddr)
     {
-        static unordered_map<string, string> dict = {
-            {"apple", "苹果"},
-            {"banana", "香蕉"},
-            {"orange", "橘子"}
-        };
-
         while(1) //与该连接进行交互
         {
             char buf[1024];
             ssize_t size = recv(sock, buf, sizeof(buf)-1, 0);
             if(size == 0)
             {
-                cout << "Client quit." << endl;
+                cout << ipaddr << " client quit." << endl;
                 close(sock);
                 break; //没有获取到有效信息，或对方关闭了连接，recv返回0
             }
             else if(size < 0)
-            {
                 cerr << "recv error" << endl;
-            }
             else
             {
                 buf[size] = 0;
-                cout << "Recv message: " << buf << endl;
+                cout << "From " << ipaddr << " recv message: " << buf << endl;
                 string ret;
                 auto it = dict.find(buf);
                 if(it != dict.end())
-                {
                     ret = it->second;
-                }
                 else
-                {
                     ret = "Not found!";
-                }
                 if(send(sock, ret.c_str(), ret.size(), 0) < 0)
-                {
                     cout << "send error" << endl;
-                }
             }
         }
     }
@@ -93,10 +82,11 @@ public:
     {
         while(1)
         {
-            signal(SIGCHLD, SIG_IGN); //父进程忽略子进程退出时发来的信号，子进程资源会被自动回收
+            //signal(SIGCHLD, SIG_IGN); //父进程忽略子进程退出时发来的信号，子进程资源会被自动回收
             sockaddr_in useraddr;
             socklen_t len = sizeof(useraddr);
             //从_listen_sock的队列的第一个连接中获取信息，并返回一个新的套接字用来处理该连接
+            //每个连接绑定一个唯一的socket(返回的sock)，通过该socket进行会话
             int sock = accept(_listen_sock, (sockaddr *)&useraddr, &len);
             //单进程一次只能从连接队列获取一个连接来处理
             if(sock < 0)
@@ -105,15 +95,22 @@ public:
                 continue;
             }
             cout << "IP: "<< inet_ntoa(useraddr.sin_addr) <<" client coming..." << endl;
-            pid_t pid = fork();
-            if(pid == -1)
-            {
-                cerr << "fork error" << endl;
-            }
-            else if(pid == 0)
-            {
-                serverIO(sock);
-            }
+            //处理用户会话有三种方式：
+            //1.多进程，通过创建子进程来处理与用户会话，父进程继续下一次循环，accept，再创建子进程
+            // pid_t pid = fork();
+            // if(pid == -1)
+            // {
+            //     cerr << "fork error" << endl;
+            // }
+            // else if(pid == 0)
+            // {
+            //     serverIO(sock);
+            // }
+
+            //2.多线程，有多进程类似
+
+            //3.通过线程池来处理用户会话，只需将会话任务加入线程池任务队列
+            tp->PutTask(Task(sock, inet_ntoa(useraddr.sin_addr), serverIO));
         }
     }
 
@@ -124,4 +121,15 @@ public:
     }
 };
 
+unordered_map<string, string> tcpServer::dict = {
+            {"apple", "苹果"},
+            {"banana", "香蕉"},
+            {"orange", "橘子"}
+        };
+
 #endif //__TCPSERVER_HPP_
+
+//当一个用户请求建立连接，该请求会先抵达服务器listen队列，直到服务器从队列中accept该请求
+//线程池：会将该请求抽象为一个Task，通过PushTask加入线程池任务队列，
+//      每个线程从任务队列中拿任务去执行，即去执行serverIO()，直至与该用户会话结束，serverIO退出，
+//      该线程才能去继续拿任务，执行...，因此线程池中线程个数决定了服务器同时可维护的会话个数。

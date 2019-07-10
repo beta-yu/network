@@ -25,12 +25,6 @@ public:
             cerr << "socket error" << endl;
             exit(2);
         }
-        // uint32_t ip;
-        // if(inet_pton(AF_INET, _ip.c_str(), &ip) != 1)
-        // {
-        //     cerr << "ip error" << endl;
-        //     exit(3);
-        // }
         sockaddr_in server_addr;
         server_addr.sin_family =AF_INET;
         server_addr.sin_addr.s_addr = inet_addr(_ip.c_str());
