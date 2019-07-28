@@ -1,4 +1,4 @@
-.PUONY:all
+.PHONY:all
 all:tcpServer tcpClient
 
 tcpServer:tcpServer.cc
