@@ -59,6 +59,8 @@ public:
                     if(fdset[i] == listen_sock_fd) //有新的连接建立请求
                     {
                         int fd = listen_sock->Accept();
+                        if(fd < 0) //Accept可能失败
+                            continue;
                         size_t j = 0;
                         while(j < MAX && fdset[j] != -1) ++j;
 
