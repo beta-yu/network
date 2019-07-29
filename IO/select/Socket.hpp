@@ -24,10 +24,6 @@ public:
             cerr << "create socket failed." << endl;
             exit(1);
         }
-        int opt = 1;
-        int ret = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-        if(ret != 0)
-            cerr << "setsockopt failed." << endl;
     }
     void Bind()
     {

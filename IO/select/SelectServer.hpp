@@ -3,7 +3,7 @@
 #include <vector>
 #include <errno.h>
 #include <cstring>
-#define MAX 3
+#define MAX 20
 
 class SelectServer
 {
@@ -18,8 +18,11 @@ public:
     void InitServer()
     {
         listen_sock = new Socket(port);
-        
         listen_sock->Create();
+        int opt = 1;
+        int ret = setsockopt(listen_sock->GetSocket(), SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+        if(ret != 0)
+            cerr << "setsockopt failed." << endl;
         listen_sock->Bind();
         listen_sock->Listen();
     }
@@ -74,7 +77,6 @@ public:
                             // }
                             // cout << endl;
                         }
-
                     }
                     else //已建立的连接有读事件就绪
                     {
