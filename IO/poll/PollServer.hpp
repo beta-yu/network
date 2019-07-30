@@ -38,7 +38,7 @@ private:
                 else
                 {
                     char buf[1024];
-                    ssize_t size = recv(fds[i].fd, buf, sizeof(buf), 0);
+                    ssize_t size = recv(fds[i].fd, buf, sizeof(buf)-1, 0);
                     buf[size] = 0;
                     if(size < 0)
                     {
