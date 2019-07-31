@@ -79,7 +79,7 @@ private:
             {
               if(errno == EAGAIN) //套接字被设置为非阻塞，不存在就绪事件时errno被设置为EAGIN
                 break;
-              continue;              
+              break;              
             }
             Util::SetNonBlock(fd);
             if(!Util::EpollAdd(eventpoll, fd))
@@ -89,7 +89,7 @@ private:
         }
         else //非listen_socket事件就绪
         {
-          char buf[10240]; //假定足够大
+          char buf[6]; //假定足够大
           bool close_flag = false;
           while(1)
           {
@@ -119,6 +119,7 @@ private:
             {
               cout << buf;
             }
+            cout << size << endl;
             if(size < sizeof(buf)-1)
               break;
           }
@@ -210,3 +211,5 @@ public:
 
 //ET模式epoll server
 //BUG：在读数据时，并不知道特定协议，因此不能确定一个完整的报文，可能会存在一个报文分两次发...
+//关于读写时返回EAGAIN，是应该退出循环读(break)还是再读(continue)？？？
+//当对端发送数据刚好等于接受端读缓冲buf的大小，则一次刚好读完，再读时返回EAGAIN，如果不退出，则一直循环读，总是返回EAGAIN，死循环？
